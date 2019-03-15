@@ -19,6 +19,11 @@
 
 namespace Kleptes;
 
+use InvalidArgumentException;
+use OutOfBoundsException;
+use Kleptes\Random\MtRandom;
+use Kleptes\Random\Random;
+
 /**
  *
  */
@@ -30,15 +35,15 @@ class Recruiter
   /** @var \Kleptes\Job[] */
   private $jobs = [];
 
-  /** @var \Kleptes\Random */
-  private $rand;
+  /** @var \Kleptes\Random\Random */
+  private $random;
 
   /**
    *
    */
-  public function __construct(Random $rand = null)
+  public function __construct(Random $random = null)
   {
-    $this->rand = $rand ?: new MtRandom();
+    $this->random = $random ?: new MtRandom();
   }
 
   /**
@@ -53,14 +58,22 @@ class Recruiter
   }
 
   /**
-   * @return void
+   * @throws \InvalidArgumentException If $job_id has already been installed
+   * @throws \OutOfBoundsException If $rate will put the total of all installed Jobs over 1.0
    */
   public function install(Job $job, string $job_id, float $rate)
   {
     if (isset($this->jobs[$job_id]))
-      throw new Exception("Job \"$job_id\" already registered");
+      throw new InvalidArgumentException("Job \"$job_id\" already registered");
 
-    $this->jobs[$job_id] = [ $job, $rate ];
+    // sum recruiting rates with addition, watch for overflow
+    $total = array_reduce($this->jobs, function ($sum, $details) {
+      return $sum + $details['rate'];
+    }, $rate);
+    if ($total > 1.0)
+      throw new OutOfBoundsException("Job \"$job_id\" recruiting rate $rate will exceed max. rate of 1.0");
+
+    $this->jobs[$job_id] = [ 'job' => $job, 'rate' => $rate ];
   }
 
   /**
@@ -68,12 +81,71 @@ class Recruiter
    */
   public function enlist()
   {
+    $duty = Job::DISMISSED;
+
+    $job = $this->select_job();
+    if ($job)
+      $duty = $this->work($job);
+
+    return $duty;
   }
 
   /**
-   * @return int \Kleptes\Job::RECRUITED or \Kleptes\Job::DISMISSED
+   * @return string[] Job ID's reporting Job::RECRUITED
    */
   public function volunteer()
   {
+    $recruited = [];
+    foreach ($this->jobs as $job_id => $details) {
+      if ($this->work($details['job']) == Job::RECRUITED)
+        $recruited[] = $job_id;
+    }
+
+    return $recruited;
+  }
+
+  /**
+   * Randomly select a Job to perform work on.
+   *
+   * If caller avoided duty, returns `null`.
+   *
+   * @return \Kleptes\Job|null
+   */
+  private function select_job()
+  {
+    $lottery = $this->random->next_float();
+
+    $target = 0.0;
+    foreach ($this->jobs as $job_id => $details) {
+      $target += $details['rate'];
+
+      // chance of being selected accumulates with each Job to ensure each Job is getting its
+      // requested percentage of recruits ... see README.md for rationale
+      if ($lottery <= $target)
+        return $details['job'];
+    }
+
+    return null;
+  }
+
+  /**
+   * Let a Job perform some work.
+   *
+   * @param \Kleptes\Job $job
+   * @return int \Kleptes\Job::RECRUITED or \Kleptes\Job::DISMISSED
+   */
+  private function work(Job $job)
+  {
+    // default is RECRUITED if Exception is thrown
+    $duty = Job::RECRUITED;
+    try {
+      $duty = $job->recruited();
+    } catch (Exception $e) {
+      // TODO: log error
+      $e->printStackTrace();
+    }
+
+    // if Job forgot to return a value, assume enlistee was recruited
+    return isset($duty) ? $duty : Job::RECRUITED;
   }
 }
