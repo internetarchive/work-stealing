@@ -23,7 +23,22 @@ use WorkStealing\Job;
 use Predis\Client;
 
 /**
+ * Example for using work stealing with Redis: A hash map with volatile fields.
  *
+ * With Redis, only keys may have an expiration.  This means individual fields in a hash map cannot
+ * be selectively expired.  When the time-to-live is reached, the entire hash map is evicted from
+ * the Redis server.
+ *
+ * VolatileHashFields stores a Redis hash map with no expiration (meaning it won't be evicted when
+ * under memory pressure) and stores expiration times for each of its fields in a separate sorted
+ * set.  The accessor functions (`hsetex()`, `hget()`) read & write from both data structures.
+ *
+ * To prevent hash maps with expiring fields from accumulating, a background work stealing job
+ * periodically polls the hash map and removes any fields that may have expired.  This allows for
+ * memory to be freed in much the same manner as Redis frees memory of volatile keys.
+ *
+ * To ensure this background work is performed, register an instance of this object with Recruiter
+ * and call Recruiter::enlist() periodically.
  */
 class VolatileHashFields implements Job
 {
@@ -37,7 +52,8 @@ class VolatileHashFields implements Job
   private $zset_key;
 
   /**
-   *
+   * @param \Predis\Client
+   * @param string $base_key Base Redis key for hash map and sorted set
    */
   public function __construct(Client $redis, string $base_key)
   {
@@ -47,6 +63,11 @@ class VolatileHashFields implements Job
   }
 
   /**
+   * Set a hash field with an expiration.
+   *
+   * @param string $field Field name
+   * @param string $value Field value
+   * @param int $ttl Time-to-live (in seconds)
    * @throws \Predis\PredisException
    */
   public function hsetex(string $field, string $value, int $ttl)
@@ -62,9 +83,14 @@ class VolatileHashFields implements Job
   }
 
   /**
+   * Get a hash field value.
    *
+   * If the field has expired or is not present, `null` is returned.
+   *
+   * @param string $field Field name
+   * @return string|null
    */
-  public function hget(string $field, string $value)
+  public function hget(string $field)
   {
     $xact = $this->redis->transaction();
 
@@ -90,16 +116,21 @@ class VolatileHashFields implements Job
     } catch (\Predis\PredisException $pe) {
       // log error but do not retry or consider fatal ... if transaction aborted because of WATCH,
       // indicates a write occurred and GC should not occur now (next worker will attempt)
+      echo $pe->getTraceAsString();
     } finally {
       // clear WATCH (in case transaction did not run)
       $this->redis->unwatch();
     }
 
+    // RECRUITED if one or more fields were reaped from the hash map
     return $reaped ? Job::RECRUITED : Job::DISMISSED;
   }
 
   /**
+   * Perform garbage collection on the hash map.
    *
+   * @return int Number of expired fields reaped
+   * @throws \Predis\PredisException
    */
   private function gc()
   {

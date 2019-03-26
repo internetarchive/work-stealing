@@ -20,7 +20,7 @@
 namespace WorkStealing;
 
 /**
- *
+ * An interface used by Recruiter to invoke a background job via work stealing.
  */
 interface Job
 {
@@ -31,6 +31,15 @@ interface Job
   const DISMISSED = 0;
 
   /**
+   * Perform a slice of background (or side-) work.
+   *
+   * For statistic gathering, it's useful for recruited() to return RECRUITED or DISMISSED to
+   * indicate if the caller had any work to perform.  By recording DISMISSED (no work) vs.
+   * RECRUITED (worked) rates, the job rate supplied to Recruiter can be tweaked.
+   *
+   * If this function return `null`, it's assumed the caller forgot to supply a proper value.
+   * Recruiter treats it as RECRUITED.
+   *
    * @return int \WorkStealing\Job::RECRUITED or \WorkStealing\Job::DISMISSED
    */
   public function recruited();

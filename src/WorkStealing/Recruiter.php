@@ -19,13 +19,27 @@
 
 namespace WorkStealing;
 
+use Exception;
 use InvalidArgumentException;
 use OutOfBoundsException;
 use WorkStealing\Random\MtRandom;
 use WorkStealing\Random\Random;
 
 /**
+ * A class that manages one or more work stealing Job objects.
  *
+ * Jobs are installed with a Recruiter.  Each has a job identifier (string) and a recruiting rate
+ * (float).
+ *
+ * A global instance of Recruiter is provided for convenience.  Different subsystem may invoke their
+ * own instances, however.
+ *
+ * When callers are enlisted, they may or may not be recruited for work using a random number
+ * generator and each job's recruiting rate.  If recruited, the caller will be shuttled off to one
+ * (1) job, perform a small slice of work, and exit.
+ *
+ * By performing this work throughout a distributed cluster, background work may be performed without
+ * dedicating resources toward daemons, cron jobs, etc.
  */
 class Recruiter
 {
@@ -39,7 +53,7 @@ class Recruiter
   private $random;
 
   /**
-   *
+   * @param \WorkStealing\Random\Random|null If `null`, MtRandom is used
    */
   public function __construct(Random $random = null)
   {
@@ -47,6 +61,8 @@ class Recruiter
   }
 
   /**
+   * Obtain the global master Recruiter instance.
+   *
    * @return \WorkStealing\Recruiter
    */
   public static function master()
@@ -58,6 +74,11 @@ class Recruiter
   }
 
   /**
+   * Install a Job with this Recruiter.
+   *
+   * @param \WorkStealing\Job $job
+   * @param string $job_id Each job must have a unique identifier
+   * @param float $rate Recruitment rate (percent of enlist() callers to perform this Job)
    * @throws \InvalidArgumentException If $job_id has already been installed
    * @throws \OutOfBoundsException If $rate will put the total of all installed Jobs over 1.0
    */
@@ -77,6 +98,11 @@ class Recruiter
   }
 
   /**
+   * Enlist a worker with spare cycles to perform a background job.
+   *
+   * If returns RECRUITED, the caller performed a small amount of work for a Job.  DISMISSED indicates
+   * either it was not recruited or the selected job had no work for it to perform.
+   *
    * @return int \WorkStealing\Job::RECRUITED or \WorkStealing\Job::DISMISSED
    */
   public function enlist()
@@ -88,20 +114,6 @@ class Recruiter
       $duty = $this->work($job);
 
     return $duty;
-  }
-
-  /**
-   * @return string[] Job ID's reporting Job::RECRUITED
-   */
-  public function volunteer()
-  {
-    $recruited = [];
-    foreach ($this->jobs as $job_id => $details) {
-      if ($this->work($details['job']) == Job::RECRUITED)
-        $recruited[] = $job_id;
-    }
-
-    return $recruited;
   }
 
   /**
@@ -136,13 +148,13 @@ class Recruiter
    */
   private function work(Job $job)
   {
-    // default is RECRUITED if Exception is thrown
-    $duty = Job::RECRUITED;
+    // default is DISMISSED if Exception is thrown
+    $duty = Job::DISMISSED;
     try {
       $duty = $job->recruited();
     } catch (Exception $e) {
       // TODO: log error
-      $e->printStackTrace();
+      echo $e->getTraceAsString();
     }
 
     // if Job forgot to return a value, assume enlistee was recruited
