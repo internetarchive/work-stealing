@@ -1,4 +1,4 @@
-# Kleptes: Basic work stealing framework for Redis
+# Basic work stealing framework for Redis
 
 * Jim Nelson <<jnelson@archive.org>>
 * Internet Archive
@@ -10,7 +10,7 @@
 
 ## License
 
-Kleptes is licensed under the [GNU Affero General Public License](https://www.gnu.org/licenses/agpl.html|).  See the LICENSE file for more information.
+WorkStealing is licensed under the [GNU Affero General Public License](https://www.gnu.org/licenses/agpl.html|).  See the LICENSE file for more information.
 
 ## Unit tests
 

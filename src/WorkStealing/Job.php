@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Kleptes;
+namespace WorkStealing;
 
 /**
  *
@@ -31,7 +31,7 @@ interface Job
   const DISMISSED = 0;
 
   /**
-   * @return int \Kleptes\Job::RECRUITED or \Kleptes\Job::DISMISSED
+   * @return int \WorkStealing\Job::RECRUITED or \WorkStealing\Job::DISMISSED
    */
   public function recruited();
 }

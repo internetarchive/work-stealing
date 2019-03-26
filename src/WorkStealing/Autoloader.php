@@ -17,20 +17,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Kleptes;
+namespace WorkStealing;
 
 /**
- * Quick-and-dirty autoloader for Kleptes library.
+ * Quick-and-dirty autoloader for WorkStealing library.
  */
 class Autoloader
 {
   /**
-   * Register Kleptes' autoloader.
+   * Register WorkStealing autoloader.
    */
   public static function register()
   {
     spl_autoload_register(function ($class) {
-      if (strpos($class, 'Kleptes\\') !== 0)
+      if (strpos($class, 'WorkStealing\\') !== 0)
         return;
 
       $path = str_replace('\\', DIRECTORY_SEPARATOR, $class);

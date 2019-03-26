@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Kleptes\Random;
+namespace WorkStealing\Random;
 
 /**
  * Random or pseudo-random number generator.

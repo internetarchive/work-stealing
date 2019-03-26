@@ -17,25 +17,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Kleptes;
+namespace WorkStealing;
 
 use InvalidArgumentException;
 use OutOfBoundsException;
-use Kleptes\Random\MtRandom;
-use Kleptes\Random\Random;
+use WorkStealing\Random\MtRandom;
+use WorkStealing\Random\Random;
 
 /**
  *
  */
 class Recruiter
 {
-  /** @var \Kleptes\Recruiter|null */
+  /** @var \WorkStealing\Recruiter|null */
   private static $master = null;
 
-  /** @var \Kleptes\Job[] */
+  /** @var \WorkStealing\Job[] */
   private $jobs = [];
 
-  /** @var \Kleptes\Random\Random */
+  /** @var \WorkStealing\Random\Random */
   private $random;
 
   /**
@@ -47,7 +47,7 @@ class Recruiter
   }
 
   /**
-   * @return \Kleptes\Recruiter
+   * @return \WorkStealing\Recruiter
    */
   public static function master()
   {
@@ -77,7 +77,7 @@ class Recruiter
   }
 
   /**
-   * @return int \Kleptes\Job::RECRUITED or \Kleptes\Job::DISMISSED
+   * @return int \WorkStealing\Job::RECRUITED or \WorkStealing\Job::DISMISSED
    */
   public function enlist()
   {
@@ -109,7 +109,7 @@ class Recruiter
    *
    * If caller avoided duty, returns `null`.
    *
-   * @return \Kleptes\Job|null
+   * @return \WorkStealing\Job|null
    */
   private function select_job()
   {
@@ -131,8 +131,8 @@ class Recruiter
   /**
    * Let a Job perform some work.
    *
-   * @param \Kleptes\Job $job
-   * @return int \Kleptes\Job::RECRUITED or \Kleptes\Job::DISMISSED
+   * @param \WorkStealing\Job $job
+   * @return int \WorkStealing\Job::RECRUITED or \WorkStealing\Job::DISMISSED
    */
   private function work(Job $job)
   {

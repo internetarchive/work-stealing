@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Kleptes\Redis;
+namespace WorkStealing\Redis;
 
-use Kleptes\Job;
+use WorkStealing\Job;
 use Predis\Client;
 
 /**
