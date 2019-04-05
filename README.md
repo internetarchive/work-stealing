@@ -51,3 +51,10 @@ Additionally, a more sophisticated algorithm could be envisioned that's better t
 ## More information
 
 * [Work stealing (Wikipedia)](https://en.wikipedia.org/wiki/Work_stealing)
+
+## Other projects
+
+Some of the other Redis-related projects I've presented at RedisConf:
+
+* [Deferred](https://github.com/internetarchive/deferred): Promises and Futures for Predis / PHP
+* [XFetch](https://github.com/internetarchive/xfetch): Early probabilistic recompute to prevent cache stampede
