@@ -10,11 +10,11 @@
 
 This library uses a basic approach to work stealing: Each defined Job registers with an organizing object (a Recruiter) and provides a rate from 0.0 to 1.0.  A simple random number generator determines if any worker is recruited to perform a small slice of work.  This simplicity means there's no need to store state, history, or provide some manner of priority management within the distributed cluster.
 
-This library was designed with Redis in mind.  As such, sample code is included that demonstrates how to use work stealing with [Redis](https://redis.io/|).  All code is in PHP and requires [Predis](https://github.com/nrk/predis/|) to operate.
+This library was designed with Redis in mind.  As such, sample code is included that demonstrates how to use work stealing with [Redis](https://redis.io/).  All code is in PHP and requires [Predis](https://github.com/nrk/predis/) to operate.
 
 ## License
 
-WorkStealing is licensed under the [GNU Affero General Public License](https://www.gnu.org/licenses/agpl.html|).  See the LICENSE file for more information.
+WorkStealing is licensed under the [GNU Affero General Public License](https://www.gnu.org/licenses/agpl.html).  See the LICENSE file for more information.
 
 ## Concepts
 
